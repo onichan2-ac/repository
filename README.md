@@ -1,9 +1,5 @@
 # enmity-themes
-i don’t have plans on making new themes for enmity in specific, but i may start making themes for kettu/rain instead.
-
-scroll down for themes made for newer versions*
-
-(for more check themes folder)
+this aint mine i just wanted some of my own
 
 - - - -
 
