@@ -1,4 +1,4 @@
-const { Plugin, plastique, React, setelah, Navigation } = window.enmity.lib;
+const { Plugin, React, setelah } = window.enmity.lib;
 const { createPlugin } = window.enmity.managers.plugins;
 const { Settings } = window.enmity.metro.common;
 const { findByProps } = window.enmity.metro;
@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS = {
 
 const MediaAutoplay = {
    name: "MediaAutoplay",
-   version: "1.0.0",
+   version: "1.0.1",
    description: "Auto-play through Discord channel media sections.",
    authors: [{ name: "Onichan", id: "0" }],
    settings: Settings.use(DEFAULT_SETTINGS),
@@ -23,11 +23,17 @@ const MediaAutoplay = {
 
       try {
          const ActionSheetModule = findByProps("openLazy", "hideActionSheet");
-         setelah(ActionSheetModule, "openLazy", (args, res) => {
-            res?.then((sheet) => {
-               // ActionSheet hook injection point
+         
+         if (ActionSheetModule && ActionSheetModule.openLazy) {
+            setelah(ActionSheetModule, "openLazy", (args, res) => {
+               // This will log the action sheet opening details to help us identify it
+               console.log("[MediaAutoplay] ActionSheet opened with args:", args);
+               
+               res?.then((sheet) => {
+                  console.log("[MediaAutoplay] Resolved ActionSheet component:", sheet);
+               });
             });
-         });
+         }
       } catch (e) {
          console.error("[MediaAutoplay] Failed to patch ActionSheet:", e);
       }
@@ -85,7 +91,7 @@ const MediaAutoplay = {
             trailing: React.createElement(React.FormInput, {
                keyboardType: "numeric",
                value: String(settings.getString("gifDuration", "2")),
-               onChangeText: (val) => settings.set("gifDuration", Number(val))
+               onChangeText: (val) => settings.set("gifDiscord", Number(val))
             })
          }),
          React.createElement(React.FormRow, {
@@ -101,4 +107,4 @@ const MediaAutoplay = {
    }
 };
 
-export default createPlugin(MediaAutoplay);
+module.exports = createPlugin(MediaAutoplay);
