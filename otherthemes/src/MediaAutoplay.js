@@ -3,29 +3,29 @@ const { createPlugin } = window.enmity.managers.plugins;
 const { Settings } = window.enmity.metro.common;
 const { findByProps } = window.enmity.metro;
 
-// Define settings keys and default values
 const DEFAULT_SETTINGS = {
-   videoDuration: 1,      // plays once (or generic placeholder seconds)
-   gifDuration: 2,        // plays twice approx
-   imageDuration: 2,      // 2 seconds default
-   loopMedia: false,      // option to loop the media stream
+   videoDuration: 1,
+   gifDuration: 2,
+   imageDuration: 2,
+   loopMedia: false,
 };
 
-const MediaAutoplayPlugin = {
+const MediaAutoplay = {
    name: "MediaAutoplay",
+   version: "1.0.0",
+   description: "Auto-play through Discord channel media sections.",
+   authors: [{ name: "Onichan", id: "0" }],
    settings: Settings.use(DEFAULT_SETTINGS),
 
    onStart() {
       this.isAutoplaying = false;
       this.currentIndex = 0;
 
-      // 1. Patch the ActionSheet (the three-dot menu in media view)
       try {
          const ActionSheetModule = findByProps("openLazy", "hideActionSheet");
-         
          setelah(ActionSheetModule, "openLazy", (args, res) => {
             res?.then((sheet) => {
-               // Inject custom row/button into the component tree safely when media viewer sheet opens
+               // ActionSheet hook injection point
             });
          });
       } catch (e) {
@@ -53,19 +53,14 @@ const MediaAutoplayPlugin = {
 
    runQueue() {
       if (!this.isAutoplaying) return;
-
       const settings = Settings.get("MediaAutoplay");
       const imgSec = (settings.imageDuration ?? 2) * 1000;
 
-      let delay = imgSec; 
-
       this.timer = setTimeout(() => {
-         // Trigger navigation to next item in media list
          this.runQueue();
-      }, delay);
+      }, imgSec);
    },
 
-   // Plugin Settings Panel UI Definition using vanilla React.createElement
    getSettingsPanel({ settings }) {
       return React.createElement(
          React.RN.ScrollView,
@@ -106,4 +101,4 @@ const MediaAutoplayPlugin = {
    }
 };
 
-export default createPlugin(MediaAutoplayPlugin);
+export default createPlugin(MediaAutoplay);
