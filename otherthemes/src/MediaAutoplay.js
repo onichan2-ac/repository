@@ -2,6 +2,7 @@ const { Plugin, React, setelah } = window.enmity.lib;
 const { createPlugin } = window.enmity.managers.plugins;
 const { Settings } = window.enmity.metro.common;
 const { findByProps } = window.enmity.metro;
+const Toasts = window.enmity.modules.common.Toasts;
 
 const DEFAULT_SETTINGS = {
    videoDuration: 1,
@@ -11,14 +12,17 @@ const DEFAULT_SETTINGS = {
 };
 
 const manifest = {
-   name: "MediaAutoplay",
-   version: "1.0.0",
-   build: "patch-1.0.0",
+   name: "ChannelMediaAutoplay",
+   version: "1.0.1",
+   build: "patch-1.0.1",
    description: "Auto-play through Discord channel media sections.",
    authors: [{ name: "Onichan", id: "0" }],
    color: "#ff0069",
-   sourceUrl: "https://raw.githubusercontent.com/onichan2-ac/repository/refs/heads/main/otherthemes/src/index.js" // Update to your raw js link
+   sourceUrl: "https://raw.githubusercontent.com/onichan2-ac/repository/refs/heads/main/otherthemes/src/index.js"
 };
+
+const patcher = window.enmity.patcher.create("ChannelMediaAutoplay");
+const ActionSheetModule = findByProps("openLazy", "hideActionSheet");
 
 const MediaAutoplayPlugin = {
    ...manifest,
@@ -28,21 +32,22 @@ const MediaAutoplayPlugin = {
       this.currentIndex = 0;
 
       try {
-         const ActionSheetModule = findByProps("openLazy", "hideActionSheet");
-         
          if (ActionSheetModule && ActionSheetModule.openLazy) {
-            setelah(ActionSheetModule, "openLazy", (args, res) => {
-               res?.then((sheet) => {
-                  // Media autoplay hook logic goes here
-               });
+            // Using the proven before patch pattern to catch action sheets
+            patcher.before(ActionSheetModule, "openLazy", (thisArg, [sheetName, renderFunc]) => {
+               console.log("[ChannelMediaAutoplay] ActionSheet triggered:", sheetName);
+               
+               // Once you open the media viewer three-dots menu, 
+               // check your console/logs to verify if sheetName matches the media action sheet!
             });
          }
       } catch (e) {
-         console.error("[MediaAutoplay] Failed to patch ActionSheet:", e);
+         console.error("[ChannelMediaAutoplay] Failed to patch:", e);
       }
    },
 
    onStop() {
+      patcher.unpatchAll();
       this.stopAutoplay();
    },
 
@@ -62,7 +67,7 @@ const MediaAutoplayPlugin = {
 
    runQueue() {
       if (!this.isAutoplaying) return;
-      const settings = Settings.get("MediaAutoplay");
+      const settings = Settings.get("ChannelMediaAutoplay");
       const imgSec = (settings?.imageDuration ?? 2) * 1000;
 
       this.timer = setTimeout(() => {
@@ -110,5 +115,4 @@ const MediaAutoplayPlugin = {
    }
 };
 
-// Explicitly register plugin matching the reference sample layout
 window.enmity.plugins.registerPlugin(MediaAutoplayPlugin);
