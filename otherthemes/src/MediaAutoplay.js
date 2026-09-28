@@ -11,15 +11,14 @@ const React = window.enmity.modules.common.React;
 const Settings = window.enmity.modules.common.Settings;
 
 const DEFAULT_SETTINGS = {
-   videoDuration: 1,
-   gifDuration: 2,
-   imageDuration: 2,
-   loopMedia: false,
+   videoDuration: "1",
+   gifDuration: "2",
+   imageDuration: "2",
 };
 
-const pluginName = "MediaAutoplayV3";
-const pluginVersion = "1.0.0";
-const pluginBuild = "patch-1.0.0";
+const pluginName = "MediaAutoplayV5";
+const pluginVersion = "1.2.0";
+const pluginBuild = "patch-1.2.0";
 const pluginDescription = "Auto-play through Discord channel media sections.";
 const pluginAuthors = [{ name: "Onichan", id: "0" }];
 const pluginColor = "#ff0069";
@@ -42,8 +41,9 @@ const MediaAutoplayPlugin = {
    ...manifest,
 
    onStart() {
-      console.log(`[${pluginName}] Started successfully!`);
-      
+      this.isAutoplaying = false;
+      this.timer = null;
+
       try {
          if (actionSheetModule && actionSheetModule.openLazy) {
             patcher.before(actionSheetModule, "openLazy", (thisArg, [sheetName, renderFunc]) => {
@@ -57,7 +57,34 @@ const MediaAutoplayPlugin = {
 
    onStop() {
       patcher.unpatchAll();
-      console.log(`[${pluginName}] Stopped and unpatched.`);
+      this.stopAutoplay();
+   },
+
+   startAutoplay() {
+      if (this.isAutoplaying) return;
+      this.isAutoplaying = true;
+      Toasts.open({ content: "Media Autoplay Started!", source: window.enmity.assets.getIDByName("Check") });
+      this.runQueue();
+   },
+
+   stopAutoplay() {
+      if (!this.isAutoplaying) return;
+      this.isAutoplaying = false;
+      if (this.timer) {
+         clearTimeout(this.timer);
+         this.timer = null;
+      }
+      Toasts.open({ content: "Media Autoplay Stopped", source: window.enmity.assets.getIDByName("Check") });
+   },
+
+   runQueue() {
+      if (!this.isAutoplaying) return;
+
+      const imgSec = Number(Settings.get(pluginName, "imageDuration", DEFAULT_SETTINGS.imageDuration)) * 1000;
+
+      this.timer = setTimeout(() => {
+         this.runQueue();
+      }, imgSec);
    },
 
    getSettingsPanel({ settings }) {
@@ -74,8 +101,8 @@ const MediaAutoplayPlugin = {
             subLabel: "How long static images stay on screen",
             trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
-               value: String(settings.getString("imageDuration", "2")),
-               onChangeText: (val) => settings.set("imageDuration", Number(val))
+               value: settings.getString("imageDuration", DEFAULT_SETTINGS.imageDuration),
+               onChangeText: (val) => settings.set("imageDuration", val)
             })
          }),
          React.createElement(window.enmity.components.FormRow, {
@@ -83,8 +110,8 @@ const MediaAutoplayPlugin = {
             subLabel: "Duration before flipping to the next item",
             trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
-               value: String(settings.getString("gifDuration", "2")),
-               onChangeText: (val) => settings.set("gifDuration", Number(val))
+               value: settings.getString("gifDuration", DEFAULT_SETTINGS.gifDuration),
+               onChangeText: (val) => settings.set("gifDuration", val)
             })
          }),
          React.createElement(window.enmity.components.FormRow, {
@@ -92,8 +119,8 @@ const MediaAutoplayPlugin = {
             subLabel: "Fallback duration if video metadata length isn't read",
             trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
-               value: String(settings.getString("videoDuration", "5")),
-               onChangeText: (val) => settings.set("videoDuration", Number(val))
+               value: settings.getString("videoDuration", DEFAULT_SETTINGS.videoDuration),
+               onChangeText: (val) => settings.set("videoDuration", val)
             })
          })
       );
