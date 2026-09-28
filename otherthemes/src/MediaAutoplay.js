@@ -1,10 +1,3 @@
-/**
- * @name MediaAutoplay
- * @author Onichan
- * @description Auto-play through Discord channel media sections.
- * @version 1.0.2
-*/
-
 const { Plugin, React, setelah } = window.enmity.lib;
 const { createPlugin } = window.enmity.managers.plugins;
 const { Settings } = window.enmity.metro.common;
@@ -17,12 +10,18 @@ const DEFAULT_SETTINGS = {
    loopMedia: false,
 };
 
-const MediaAutoplay = {
+const manifest = {
    name: "MediaAutoplay",
-   version: "1.0.2",
+   version: "1.0.0",
+   build: "patch-1.0.0",
    description: "Auto-play through Discord channel media sections.",
    authors: [{ name: "Onichan", id: "0" }],
-   settings: Settings.use(DEFAULT_SETTINGS),
+   color: "#ff0069",
+   sourceUrl: "https://raw.githubusercontent.com/onichan2-ac/repository/refs/heads/main/otherthemes/src/index.js" // Update to your raw js link
+};
+
+const MediaAutoplayPlugin = {
+   ...manifest,
 
    onStart() {
       this.isAutoplaying = false;
@@ -33,10 +32,8 @@ const MediaAutoplay = {
          
          if (ActionSheetModule && ActionSheetModule.openLazy) {
             setelah(ActionSheetModule, "openLazy", (args, res) => {
-               console.log("[MediaAutoplay] ActionSheet opened with args:", args);
-               
                res?.then((sheet) => {
-                  console.log("[MediaAutoplay] Resolved ActionSheet component:", sheet);
+                  // Media autoplay hook logic goes here
                });
             });
          }
@@ -66,7 +63,7 @@ const MediaAutoplay = {
    runQueue() {
       if (!this.isAutoplaying) return;
       const settings = Settings.get("MediaAutoplay");
-      const imgSec = (settings.imageDuration ?? 2) * 1000;
+      const imgSec = (settings?.imageDuration ?? 2) * 1000;
 
       this.timer = setTimeout(() => {
          this.runQueue();
@@ -113,4 +110,5 @@ const MediaAutoplay = {
    }
 };
 
-module.exports = createPlugin(MediaAutoplay);
+// Explicitly register plugin matching the reference sample layout
+window.enmity.plugins.registerPlugin(MediaAutoplayPlugin);
