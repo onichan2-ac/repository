@@ -1,8 +1,14 @@
-const { Plugin, React, setelah } = window.enmity.lib;
-const { createPlugin } = window.enmity.managers.plugins;
-const { Settings } = window.enmity.metro.common;
-const { findByProps } = window.enmity.metro;
+function registerPlugin(pluginObject) {
+   window.enmity.plugins.registerPlugin(pluginObject);
+}
+
+function findModuleProps(...props) {
+   return window.enmity.modules.getByProps(...props);
+}
+
 const Toasts = window.enmity.modules.common.Toasts;
+const React = window.enmity.modules.common.React;
+const Settings = window.enmity.modules.common.Settings;
 
 const DEFAULT_SETTINGS = {
    videoDuration: 1,
@@ -11,101 +17,80 @@ const DEFAULT_SETTINGS = {
    loopMedia: false,
 };
 
+const pluginName = "MediaAutoplayV3";
+const pluginVersion = "1.0.0";
+const pluginBuild = "patch-1.0.0";
+const pluginDescription = "Auto-play through Discord channel media sections.";
+const pluginAuthors = [{ name: "Onichan", id: "0" }];
+const pluginColor = "#ff0069";
+const pluginSourceUrl = "https://raw.githubusercontent.com/onichan2-ac/repository/refs/heads/main/otherthemes/src/index.js";
+
 const manifest = {
-   name: "ChannelMediaAutoplay",
-   version: "1.0.1",
-   build: "patch-1.0.1",
-   description: "Auto-play through Discord channel media sections.",
-   authors: [{ name: "Onichan", id: "0" }],
-   color: "#ff0069",
-   sourceUrl: "https://raw.githubusercontent.com/onichan2-ac/repository/refs/heads/main/otherthemes/src/index.js"
+   name: pluginName,
+   version: pluginVersion,
+   build: pluginBuild,
+   description: pluginDescription,
+   authors: pluginAuthors,
+   color: pluginColor,
+   sourceUrl: pluginSourceUrl
 };
 
-const patcher = window.enmity.patcher.create("ChannelMediaAutoplay");
-const ActionSheetModule = findByProps("openLazy", "hideActionSheet");
+const patcher = window.enmity.patcher.create(pluginName);
+const actionSheetModule = findModuleProps("openLazy", "hideActionSheet");
 
 const MediaAutoplayPlugin = {
    ...manifest,
 
    onStart() {
-      this.isAutoplaying = false;
-      this.currentIndex = 0;
-
+      console.log(`[${pluginName}] Started successfully!`);
+      
       try {
-         if (ActionSheetModule && ActionSheetModule.openLazy) {
-            // Using the proven before patch pattern to catch action sheets
-            patcher.before(ActionSheetModule, "openLazy", (thisArg, [sheetName, renderFunc]) => {
-               console.log("[ChannelMediaAutoplay] ActionSheet triggered:", sheetName);
-               
-               // Once you open the media viewer three-dots menu, 
-               // check your console/logs to verify if sheetName matches the media action sheet!
+         if (actionSheetModule && actionSheetModule.openLazy) {
+            patcher.before(actionSheetModule, "openLazy", (thisArg, [sheetName, renderFunc]) => {
+               console.log(`[${pluginName}] ActionSheet triggered:`, sheetName);
             });
          }
-      } catch (e) {
-         console.error("[ChannelMediaAutoplay] Failed to patch:", e);
+      } catch (error) {
+         console.error(`[${pluginName}] Error during patch initialization:`, error);
       }
    },
 
    onStop() {
       patcher.unpatchAll();
-      this.stopAutoplay();
-   },
-
-   startAutoplay() {
-      if (this.isAutoplaying) return;
-      this.isAutoplaying = true;
-      this.runQueue();
-   },
-
-   stopAutoplay() {
-      this.isAutoplaying = false;
-      if (this.timer) {
-         clearTimeout(this.timer);
-         this.timer = null;
-      }
-   },
-
-   runQueue() {
-      if (!this.isAutoplaying) return;
-      const settings = Settings.get("ChannelMediaAutoplay");
-      const imgSec = (settings?.imageDuration ?? 2) * 1000;
-
-      this.timer = setTimeout(() => {
-         this.runQueue();
-      }, imgSec);
+      console.log(`[${pluginName}] Stopped and unpatched.`);
    },
 
    getSettingsPanel({ settings }) {
       return React.createElement(
-         React.RN.ScrollView,
+         window.enmity.components.ScrollView,
          { style: { padding: 16 } },
          React.createElement(
-            React.RN.Text,
+            window.enmity.components.Text,
             { style: { color: "#fff", fontSize: 16, fontWeight: "bold", marginBottom: 12 } },
             "Autoplay Timings & Preferences"
          ),
-         React.createElement(React.FormRow, {
+         React.createElement(window.enmity.components.FormRow, {
             label: "Image Duration (seconds)",
             subLabel: "How long static images stay on screen",
-            trailing: React.createElement(React.FormInput, {
+            trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
                value: String(settings.getString("imageDuration", "2")),
                onChangeText: (val) => settings.set("imageDuration", Number(val))
             })
          }),
-         React.createElement(React.FormRow, {
+         React.createElement(window.enmity.components.FormRow, {
             label: "GIF Duration (seconds)",
             subLabel: "Duration before flipping to the next item",
-            trailing: React.createElement(React.FormInput, {
+            trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
                value: String(settings.getString("gifDuration", "2")),
                onChangeText: (val) => settings.set("gifDuration", Number(val))
             })
          }),
-         React.createElement(React.FormRow, {
+         React.createElement(window.enmity.components.FormRow, {
             label: "Video Duration fallback (seconds)",
             subLabel: "Fallback duration if video metadata length isn't read",
-            trailing: React.createElement(React.FormInput, {
+            trailing: React.createElement(window.enmity.components.FormInput, {
                keyboardType: "numeric",
                value: String(settings.getString("videoDuration", "5")),
                onChangeText: (val) => settings.set("videoDuration", Number(val))
@@ -115,4 +100,4 @@ const MediaAutoplayPlugin = {
    }
 };
 
-window.enmity.plugins.registerPlugin(MediaAutoplayPlugin);
+registerPlugin(MediaAutoplayPlugin);
