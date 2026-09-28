@@ -1,3 +1,10 @@
+/**
+ * @name MediaAutoplay
+ * @author Onichan
+ * @description Auto-play through Discord channel media sections.
+ * @version 1.0.2
+*/
+
 const { Plugin, React, setelah } = window.enmity.lib;
 const { createPlugin } = window.enmity.managers.plugins;
 const { Settings } = window.enmity.metro.common;
@@ -12,7 +19,7 @@ const DEFAULT_SETTINGS = {
 
 const MediaAutoplay = {
    name: "MediaAutoplay",
-   version: "1.0.1",
+   version: "1.0.2",
    description: "Auto-play through Discord channel media sections.",
    authors: [{ name: "Onichan", id: "0" }],
    settings: Settings.use(DEFAULT_SETTINGS),
@@ -26,7 +33,6 @@ const MediaAutoplay = {
          
          if (ActionSheetModule && ActionSheetModule.openLazy) {
             setelah(ActionSheetModule, "openLazy", (args, res) => {
-               // This will log the action sheet opening details to help us identify it
                console.log("[MediaAutoplay] ActionSheet opened with args:", args);
                
                res?.then((sheet) => {
@@ -91,7 +97,7 @@ const MediaAutoplay = {
             trailing: React.createElement(React.FormInput, {
                keyboardType: "numeric",
                value: String(settings.getString("gifDuration", "2")),
-               onChangeText: (val) => settings.set("gifDiscord", Number(val))
+               onChangeText: (val) => settings.set("gifDuration", Number(val))
             })
          }),
          React.createElement(React.FormRow, {
